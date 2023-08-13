@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 // author: otumian-empire popecan1000@gmail.com
@@ -10,9 +11,22 @@ import (
 // description: description and other details can be found in the README.md
 // operation: get operands and operator (string) and return the results
 
+// a func which takes in two int args and returns an int
+type BinaryFuncInt func(int, int) int
+
+const (
+	OPERATORS = "+,-,*,/"
+	ADD       = "+"
+	DIV       = "/"
+	MUL       = "*"
+	SUB       = "-"
+)
+
+const ZERO = 0
+
 // put negative second operands in brackets: (-23)
 func blockOperand(operand int) string {
-	if operand < 0 {
+	if operand < ZERO {
 		return fmt.Sprintf("(%v)", operand)
 	}
 
@@ -32,7 +46,7 @@ func getOperand(name string) int {
 
 // read operator
 func getOperator() string {
-	fmt.Print("Enter operator [+,-,*,/]: ")
+	fmt.Printf("Enter operator [%v]: ", OPERATORS)
 	var operator string
 	fmt.Scan(&operator)
 
@@ -46,32 +60,27 @@ func exitCode(message string) {
 	os.Exit(1)
 }
 
-func calculate(operator string, firstOperand, secondOperand int) int {
-	var result int
-
-	switch operator {
-	case "+":
-		result = firstOperand + secondOperand
-	case "-":
-		result = firstOperand - secondOperand
-	case "*":
-		result = firstOperand * secondOperand
-	case "/":
-		if secondOperand == 0 {
-			exitCode("Zero division for operator " + operator)
-		}
-
-		result = firstOperand / secondOperand
-	default:
-		exitCode("Operator not known")
-	}
-
-	return result
+func displayResult(operator string, firstOperand, secondOperand, result int) {
+	fmt.Printf("%v %v %v = %v\n\n", blockOperand(firstOperand), operator, blockOperand(secondOperand), result)
+	fmt.Println("Done!!!")
 }
 
-func displayResult(operator string, firstOperand, secondOperand, result int) {
-	fmt.Printf("%v %v %v = %v", blockOperand(firstOperand), operator, blockOperand(secondOperand), result)
-	fmt.Println("\n\nDone!!!")
+func add(x, y int) int { return x + y }
+func div(x, y int) int { return x / y }
+func mul(x, y int) int { return x * y }
+func sub(x, y int) int { return x - y }
+
+func calculate() map[string]BinaryFuncInt {
+	return map[string]BinaryFuncInt{
+		ADD: add,
+		SUB: sub,
+		MUL: mul,
+		DIV: div,
+	}
+}
+
+func validateOperator(op string) bool {
+	return strings.Contains(OPERATORS, op)
 }
 
 func main() {
@@ -81,7 +90,18 @@ func main() {
 	secondOperand := getOperand("second")
 	operator := getOperator()
 
-	result := calculate(operator, firstOperand, secondOperand)
+	// validate operator
+	if !validateOperator(operator) {
+		exitCode("Operator not known")
+	}
+
+	// if the operator is / then check for zero division
+	if secondOperand == ZERO {
+		exitCode("Zero division for operator " + operator)
+	}
+
+	// compute the result
+	result := calculate()[operator](firstOperand, secondOperand)
 
 	displayResult(operator, firstOperand, secondOperand, result)
 }
